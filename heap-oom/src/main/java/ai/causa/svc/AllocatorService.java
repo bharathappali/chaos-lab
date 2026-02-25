@@ -60,16 +60,13 @@ public class AllocatorService {
     private volatile boolean deadlineTriggered = false;
 
     // Called by scheduler to auto-allocate when the deadline passes without traffic
-    public void maybeAutoAllocateOnDeadline() {
+    public synchronized void maybeAutoAllocateOnDeadline() {
         if (policy != Constants.OomPolicy.time || !autoOnDeadline) return;
         long elapsed = clock.uptimeMillis();
         long deadlineMillis = durationSeconds * 1000L;
         if (elapsed < deadlineMillis || deadlineTriggered) return;
+        deadlineTriggered = true;
 
-        synchronized (timeLock) {
-            if (deadlineTriggered) return;
-            deadlineTriggered = true;
-        }
         // Allocate the full remaining headroom in one go → OOM
         long remaining = bytesRemainingToMax();
         if (remaining > 0) {
@@ -135,7 +132,12 @@ public class AllocatorService {
         long remainingVirtual = Math.max(1, totalVirtual - (virtualApplied - toApplyNow));
         long remainingBytes = bytesRemainingToMax();
         long bytesPerVirtual = Math.max(1, divCeil(remainingBytes, remainingVirtual));
-        long bytesThisRequest = Math.multiplyExact(bytesPerVirtual, toApplyNow);
+        long bytesThisRequest;
+        if (toApplyNow > remainingBytes / bytesPerVirtual) {
+            bytesThisRequest = remainingBytes;
+        } else {
+            bytesThisRequest = bytesPerVirtual * toApplyNow;
+        }
 
         allocateAndRetainBytes(bytesThisRequest);
 
