@@ -29,7 +29,9 @@ public class StatusResource {
 
         return Map.of(
                 "scenario", scenario.name(),
-                "phase", phase.name()
+                "phase", phase.name(),
+                "cycleSeconds", System.getProperty("gc.cycle.seconds", "60"),
+                "time", System.currentTimeMillis()
         );
     }
 }
