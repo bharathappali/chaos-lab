@@ -22,7 +22,7 @@ RUN mvn -B -q -DskipTests package
 FROM eclipse-temurin:21-jre-jammy
 
 # JVM tuning for container + deterministic crash
-ENV JAVA_TOOL_OPTIONS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=95 -XX:+CrashOnOutOfMemoryError"
+ENV JAVA_TOOL_OPTIONS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=80 -XX:+CrashOnOutOfMemoryError"
 
 WORKDIR /app
 
